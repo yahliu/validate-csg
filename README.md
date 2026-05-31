@@ -23,6 +23,15 @@ cd ui-tests && pip install -r requirements.txt && playwright install chromium &&
 - **UI tests** — Component-driven, from actual React source code analysis
 - **Shared utils** — Common helpers extracted to avoid duplication
 
+## CI / Jenkins
+
+Two Jenkins pipelines that handle install → start service → run tests → collect report → stop service:
+
+| Pipeline | File |
+|----------|------|
+| API tests | `Jenkinsfile.api` |
+| UI tests | `Jenkinsfile.ui` |
+
 ## Claude Skill
 
 `/write-test-case` — parses a test case description, determines API vs UI, reuses existing utils, and writes to the correct directory.
