@@ -20,7 +20,7 @@ cd ui-tests && pip install -r requirements.txt && playwright install chromium &&
 ## Design
 
 - **API tests** — Three-tier per endpoint: Normal → Boundary → Exception
-- **UI tests** — Component-driven, from actual React source code analysis
+- **UI tests** — Component-driven, and from actual React source code analysis
 - **Shared utils** — Common helpers extracted to avoid duplication
 
 ## CI / Jenkins
