@@ -1,0 +1,58 @@
+pipeline {
+    agent any
+
+    parameters {
+        string(name: 'CSGHUB_LITE_VERSION', defaultValue: 'v0.8.55', description: 'csghub-lite version to install')
+        string(name: 'MODEL', defaultValue: 'Qwen/Qwen3-0.6B-GGUF', description: 'Model to pull for testing')
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Setup') {
+            steps {
+                sh '''
+                    curl -fsSL https://hub.opencsg.com/csghub-lite/install.sh | CSGHUB_LITE_VERSION=${CSGHUB_LITE_VERSION} sh
+                    python3 -m venv venv
+                    . venv/bin/activate
+                    pip install -r api-tests/requirements.txt
+                '''
+            }
+        }
+
+        stage('Start csghub-lite') {
+            steps {
+                sh '''
+                    csghub-lite pull ${MODEL} &
+                    sleep 10
+                '''
+            }
+        }
+
+        stage('Test') {
+            steps {
+                sh '''
+                    . venv/bin/activate
+                    cd api-tests
+                    pytest test_chat_completions/ -v --junitxml=../reports/api-results.xml || true
+                '''
+            }
+            post {
+                always {
+                    junit 'reports/api-results.xml'
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            sh 'csghub-lite stop-service || true'
+            cleanWs()
+        }
+    }
+}

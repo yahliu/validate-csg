@@ -1,0 +1,54 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Setup') {
+            steps {
+                sh '''
+                    curl -fsSL https://csgclaw.opencsg.com/install.sh | bash
+                    python3 -m venv venv
+                    . venv/bin/activate
+                    pip install -r ui-tests/requirements.txt
+                    playwright install chromium
+                '''
+            }
+        }
+
+        stage('Start csgclaw') {
+            steps {
+                sh '''
+                    nohup csgclaw serve > /tmp/csgclaw.log 2>&1 &
+                    sleep 5
+                '''
+            }
+        }
+
+        stage('Test') {
+            steps {
+                sh '''
+                    . venv/bin/activate
+                    cd ui-tests
+                    pytest cases/ -v --junitxml=../reports/ui-results.xml --headed=false || true
+                '''
+            }
+            post {
+                always {
+                    junit 'reports/ui-results.xml'
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            sh 'csgclaw stop || true'
+            cleanWs()
+        }
+    }
+}
